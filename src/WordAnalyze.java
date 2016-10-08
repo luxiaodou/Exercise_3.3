@@ -5,33 +5,50 @@ import java.io.InputStreamReader;
 /**
  * Created by luxia on 2016/10/8.
  */
+
+/*
+说明：
+控制台输入需要进行处理的字符
+结束输入时需要用#END
+个人测试样例：
+BEGIN
+ENDIF END IF THEN ELSE
+a a1
+1+ - * / (),:
+;
+:=
+=
+#END
+ */
 public class WordAnalyze {
+    //宏定义
     private static final int BEGINSY = 1;
-    public static final int ENDSY = 2;
-    public static final int IFSY = 3;
-    public static final int THENSY = 4;
-    public static final int ELSE = 5;
-    public static final int IDSY = 20;
-    public static final int INTSY = 21;
-    public static final int PLUSSY = 22;
-    public static final int MINUSSY = 23;
-    public static final int STARSY = 24;
-    public static final int DIVISY = 25;
-    public static final int LPARSY = 26;
-    public static final int RPARSY = 27;
-    public static final int COMMASY = 28;
-    public static final int SEMISY = 29;
-    public static final int COLONSY = 30;
-    public static final int ASSIGNSY = 31;
-    public static final int EQUSY = 32;
-    private char c;
-    private String token;
-    private int num;
-    private int symbol;
-    private char[] input;
-    private int index = -1;
+    private static final int ENDSY = 2;
+    private static final int IFSY = 3;
+    private static final int THENSY = 4;
+    private static final int ELSE = 5;
+    private static final int IDSY = 20;
+    private static final int INTSY = 21;
+    private static final int PLUSSY = 22;
+    private static final int MINUSSY = 23;
+    private static final int STARSY = 24;
+    private static final int DIVISY = 25;
+    private static final int LPARSY = 26;
+    private static final int RPARSY = 27;
+    private static final int COMMASY = 28;
+    private static final int SEMISY = 29;
+    private static final int COLONSY = 30;
+    private static final int ASSIGNSY = 31;
+    private static final int EQUSY = 32;
 
+    private char c; //当前读进字符
+    private String token;   //存放当前单词的字符串
+    private int num;    //存放整形数值
+    private int symbol; //识别类型
+    private char[] input;   //控制台输入
+    private int index = -1; //当前指针位置
 
+    //从控制台获取输入
     public void getInput() throws IOException {
         String temp = "";
         BufferedReader bf = new BufferedReader(new InputStreamReader(System.in));
@@ -44,16 +61,22 @@ public class WordAnalyze {
         input = temp.toCharArray();
     }
 
+    //执行完整的输入-处理-输出步骤的函数
     public void fullprocedure() {
         try {
             getInput();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        while(index < input.length)
-            System.out.println(getsym());
+        while (index < input.length) {
+            getsym();
+            if (symbol != -1) {
+                System.out.println(symbol);
+            }
+        }
     }
 
+    //词法分析的主要步骤
     private int getsym() {
         clearToken();
         getchar();
@@ -61,7 +84,7 @@ public class WordAnalyze {
             getchar();
         if (isLetter()) {
             while (isLetter() || isDigit()) {
-                carToken();
+                catToken();
                 getchar();
             }
             retract();
@@ -72,7 +95,7 @@ public class WordAnalyze {
             else symbol = resultValue;
         } else if (isDigit()) {
             while (isDigit()) {
-                carToken();
+                catToken();
                 getchar();
             }
             retract();
@@ -95,24 +118,24 @@ public class WordAnalyze {
         else if (isSemi()) symbol = SEMISY;
         else if (isDivi()) {
             getchar();
-            if(isStar()){
+            if (isStar()) {
                 do {
                     do {
                         getchar();
-                    }while (!isStar());
+                    } while (!isStar());
                     do {
                         getchar();
-                        if(isDivi()) return 0;
-                    }while(isStar());
-                }while (!isStar());
+                        if (isDivi()) return 0;
+                    } while (isStar());
+                } while (!isStar());
             }
             retract();
             symbol = DIVISY;
-        }
-        else error();
+        } else error();
         return 0;
     }
 
+    //判别各个符号的函数
     private boolean isPlus() {
         return c == '+';
     }
@@ -153,10 +176,32 @@ public class WordAnalyze {
         return c == ':';
     }
 
+    private boolean isDigit() {
+        return c >= '0' && c <= '9';
+    }
+
+    private boolean isTab() {
+        return c == '\t';
+    }
+
+    private boolean isNewline() {
+        return c == '\n';
+    }
+
+    public boolean isLetter() {
+        return (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z');
+    }
+
+    private boolean isSpace() {
+        return c == ' ';
+    }
+
+    //将数字字符转化为数字的函数
     private int transNum(String token) {
         return Integer.parseInt(token);
     }
 
+    //识别是否保留字的函数
     private int reserver() {
         switch (token) {
             case "BEGIN":
@@ -174,48 +219,36 @@ public class WordAnalyze {
         }
     }
 
+    //将指针向前移动的函数
     private void retract() {
         if (index > 0)
             index--;
     }
 
-    private void carToken() {
+    //拼接token
+    private void catToken() {
         token = token + c;
     }
 
-    private boolean isDigit() {
-        return c >= '0' && c <= '9';
-    }
-
-    private boolean isTab() {
-        return c == '\t';
-    }
-
-    private boolean isNewline() {
-        return c == '\n';
-    }
-
+    //清空token
     private void clearToken() {
         token = "";
     }
 
+    //从缓冲区中读取字符，如果字符已全部完成处理，则退出程序
     private void getchar() {
-        if (index < input.length)
+        if (index < input.length - 1)
             c = input[++index];
-        else
+        else {
             System.out.println("Word Analyze complete !");
+            System.exit(0);
+        }
     }
 
-    private boolean isSpace() {
-        return c == ' ';
-    }
-
+    //报错，返回symbol = -1
     private void error() {
+        symbol = -1;
         System.out.println("Something is error!");
-    }
-
-    public boolean isLetter() {
-        return (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z');
     }
 
 }
